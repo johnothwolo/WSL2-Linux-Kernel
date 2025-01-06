@@ -37,6 +37,8 @@ jobs:
           mkdir -p artifacts/modules artifacts/headers
           make modules_install INSTALL_MOD_PATH=$(pwd)/artifacts/modules
           make headers_install INSTALL_HDR_PATH=$(pwd)/artifacts/headers
+          tar -cvzf artifacts/kernel-modules.tar.gz -C artifacts/modules .
+          tar -cvzf artifacts/kernel-headers.tar.gz -C artifacts/headers .
 
       # Package kernel
       - name: Kernel Image
