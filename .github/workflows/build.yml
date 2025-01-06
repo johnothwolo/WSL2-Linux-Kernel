@@ -25,12 +25,11 @@ jobs:
           sudo apt install -y pahole || true
           sudo apt install -y dwarves || true
 
-
       # Build the kernel
       - name: Build Kernel
         run: |
-        make olddefconfig KCONFIG_CONFIG=Microsoft/config-wsl
-        make -j$(nproc) KCONFIG_CONFIG=Microsoft/config-wsl
+          make olddefconfig KCONFIG_CONFIG=Microsoft/config-wsl
+          make -j$(nproc) KCONFIG_CONFIG=Microsoft/config-wsl
 
       # Package modules and headers
       - name: Package Modules and Headers
