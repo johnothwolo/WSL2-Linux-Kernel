@@ -1,0 +1,68 @@
+name: Build Linux Kernel
+
+on:
+  push:
+    branches:
+      - linux-msft-wsl-6.6.y  # Trigger build on pushes to the main branch
+  pull_request:
+    branches:
+      - linux-msft-wsl-6.6.y  # Trigger build on pull requests to main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Set up dependencies for kernel build
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential flex bison libssl-dev libelf-dev bc python3 cpio
+          sudo apt install -y pahole || true
+          sudo apt install -y dwarves || true
+
+
+      # Build the kernel
+      - name: Build Kernel
+        run: |
+        make olddefconfig KCONFIG_CONFIG=Microsoft/config-wsl
+        make -j$(nproc) KCONFIG_CONFIG=Microsoft/config-wsl
+
+      # Package modules and headers
+      - name: Package Modules and Headers
+        run: |
+          mkdir -p artifacts/modules artifacts/headers
+          make modules_install INSTALL_MOD_PATH=$(pwd)/artifacts/modules
+          make headers_install INSTALL_HDR_PATH=$(pwd)/artifacts/headers
+
+      # Package kernel
+      - name: Kernel Image
+        run: |
+          mkdir -p artifacts/kernel
+          cp arch/x86_64/boot/bzImage $(pwd)/artifacts/kernel/vmlinuz
+
+
+      # Upload build artifacts
+      - name: Upload Headers
+        uses: actions/upload-artifact@v3
+        with:
+          name: wsl-headers-build-${{ github.run_id }}
+          path: |
+            artifacts/kernel-headers.tar.gz
+      
+      - name: Upload Modules
+        uses: actions/upload-artifact@v3
+        with:
+          name: wsl-modules-build-${{ github.run_id }}
+          path: |
+            artifacts/kernel-modules.tar.gz
+      
+      - name: Upload Kernel Image
+        uses: actions/upload-artifact@v3
+        with:
+          name: wsl-kernel-build-${{ github.run_id }}
+          path: artifacts/kernel/vmlinuz
